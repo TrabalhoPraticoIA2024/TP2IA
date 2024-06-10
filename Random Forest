@@ -1,0 +1,58 @@
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report
+from tkinter import Tk, filedialog
+
+# Function to load a CSV file using a file dialog
+def load_csv_file(prompt):
+    root = Tk()
+    root.withdraw()  # Hide the main Tkinter window
+    file_path = filedialog.askopenfilename(title=prompt, filetypes=[("CSV files", "*.csv")])
+    root.destroy()  # Close the Tkinter window
+    return pd.read_csv(file_path)
+
+# Load the training data
+training_data = load_csv_file("Select the Training CSV file")
+# Load the testing data
+testing_data = load_csv_file("Select the Testing CSV file")
+
+# Prepare the data
+X = training_data.drop(columns=['prognosis', 'Unnamed: 133'])
+y = training_data['prognosis']
+
+# Split the training data into training and validation sets
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Handle any potential missing values
+X_train = X_train.fillna(0)
+X_val = X_val.fillna(0)
+X_test = testing_data.drop(columns=['Unnamed: 132']).fillna(0)
+
+# Train the Random Forest model
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Make predictions on the validation set
+y_val_pred = model.predict(X_val)
+
+# Calculate accuracy and classification report
+accuracy = accuracy_score(y_val, y_val_pred)
+report = classification_report(y_val, y_val_pred)
+
+# Print accuracy and classification report
+print(f"Accuracy: {accuracy}")
+print("Classification Report:")
+print(report)
+
+# Make predictions on the testing set
+y_test_pred = model.predict(X_test)
+
+# Prepare the output
+output = pd.DataFrame({'Prediction': y_test_pred})
+
+# Save the predictions to a CSV file
+output.to_csv('Predictions.csv', index=False)
+
+# Print a message to indicate completion
+print("Predictions saved to Predictions.csv")
