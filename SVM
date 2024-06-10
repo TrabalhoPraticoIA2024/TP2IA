@@ -1,0 +1,46 @@
+from tkinter import Tk
+from tkinter.filedialog import askopenfilename
+import pandas as pd
+from sklearn.svm import SVC
+from sklearn.preprocessing import LabelEncoder
+
+def load_data(filepath):
+    # Carregar os dados e remover colunas vazias
+    data = pd.read_csv(filepath)
+    data.dropna(axis=1, how='all', inplace=True)
+    return data
+
+def main():
+    root = Tk()
+    root.withdraw()  # Ocultar a janela principal do Tkinter
+
+    # Solicitar ao usuário para selecionar o arquivo de treinamento
+    print("Please select the training data file:")
+    training_file = askopenfilename(title="Select Training Data File")
+    train_data = load_data(training_file)
+    X_train = train_data.drop('prognosis', axis=1)
+    y_train = train_data['prognosis']
+    
+    # Criar e ajustar o LabelEncoder
+    label_encoder = LabelEncoder()
+    y_train_encoded = label_encoder.fit_transform(y_train)
+    
+    # Treinar o modelo SVM
+    svm_model = SVC(kernel='linear', C=1.0)
+    svm_model.fit(X_train, y_train_encoded)
+    
+    # Solicitar ao usuário para selecionar o arquivo de teste
+    print("Please select the testing data file:")
+    testing_file = askopenfilename(title="Select Testing Data File")
+    test_data = load_data(testing_file)
+    X_test = test_data  # Sem remover 'prognosis' pois não existe
+    
+    # Prever doenças com o modelo treinado
+    y_pred_encoded = svm_model.predict(X_test)
+    diseases_predicted = label_encoder.inverse_transform(y_pred_encoded)
+    
+    # Exibir as previsões
+    print("Predicted diseases for the test data:", diseases_predicted)
+
+if __name__ == '__main__':
+    main()
